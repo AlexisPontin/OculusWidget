@@ -1,10 +1,14 @@
 #ifndef OCULUSWIDGET_HPP
 #define OCULUSWIDGET_HPP
 
+#include <QtOpenGL>
 #include <QGLWidget>
+#include "geometryengine.hpp"
 #include <QOpenGLFunctions_4_3_Core>
 #include "OVR.h"
 #include "../src/OVR_CAPI_GL.h"
+
+class GeometryEngine;
 
 class OculusWidget : public QGLWidget, protected QOpenGLFunctions_4_3_Core
 {
@@ -22,8 +26,9 @@ private:
   void SetOpenGLState();
   void initTexture();
   void initRender();
+  void initShaders();
 
-  void renderCube(float p_Size);
+  void renderCube();
 
   QGLContext *context;
 
@@ -38,10 +43,15 @@ private:
 
   ovrGLConfig         cfg;
 
-  GLuint            textID;
+  GLuint            textID[2];
   GLuint            FBOId;
   GLuint            DepthBufferId;
-//  GLenum            GLDrawBuffers[1];
+
+  QMatrix4x4        projection;
+  GeometryEngine    geometryEngine;
+  QGLShaderProgram  program;
+
+  int w,h;
 
 };
 

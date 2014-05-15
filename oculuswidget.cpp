@@ -2,12 +2,22 @@
 #include <Qdebug>
 #include <QtGlobal>
 #include <QTimer>
+#include <QGLShader>
+#include <QDateTime>
+
+QImage img("D:/Data/My Videos/equi.png");
 
 OculusWidget::OculusWidget(QGLWidget *parent) :
-  QGLWidget(parent),
-  textID(-1) {
+  QGLWidget(parent)
+  /*textID(-1)*/ {
 
   setAutoBufferSwap(false);
+
+  //  QGLFormat fmt;
+  //  fmt.setStereo(true);
+  //  context = new QGLContext(fmt);
+  //  this->setContext(context);
+
   initOculus();
 }
 
@@ -31,34 +41,37 @@ void OculusWidget::initOculus() {
     qDebug() << "could not start sensor";
     exit(1);
   }
+
+  resize(oculusInfos.Resolution.w, oculusInfos.Resolution.h);
 }
 void OculusWidget::SetOpenGLState(){
   // Some state...
   glEnable(GL_CULL_FACE);
-  glEnable(GL_LIGHTING);
+//  glEnable(GL_LIGHTING);
+//  glDisable(GL_TEXTURE_2D);
   glEnable(GL_DEPTH_TEST);
-  glShadeModel(GL_SMOOTH);
-  glEnable(GL_BLEND);
-  glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+//  glShadeModel(GL_SMOOTH);
+//  glEnable(GL_BLEND);
+//  glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 
-  // Some (stationary) lights...
-  GLfloat l_Light0Position[] = { 5.0f, 6.0f, 3.0f, 0.0f };
-  GLfloat l_Light0Diffuse[] = { 1.0f, 0.8f, 0.6f, 1.0f };
-  glLightfv(GL_LIGHT0, GL_POSITION, l_Light0Position);
-  glLightfv(GL_LIGHT0, GL_DIFFUSE, l_Light0Diffuse);
-  glEnable(GL_LIGHT0);
+//  // Some (stationary) lights...
+//  GLfloat l_Light0Position[] = { 5.0f, 6.0f, 3.0f, 0.0f };
+//  GLfloat l_Light0Diffuse[] = { 1.0f, 0.8f, 0.6f, 1.0f };
+//  glLightfv(GL_LIGHT0, GL_POSITION, l_Light0Position);
+//  glLightfv(GL_LIGHT0, GL_DIFFUSE, l_Light0Diffuse);
+//  glEnable(GL_LIGHT0);
 
-  GLfloat l_Light1Position[] = { -5.0f, -6.0f, 5.0f, 0.0f };
-  GLfloat l_Light1Diffuse[] = { 0.6f, 0.8f, 1.0f, 1.0f };
-  glLightfv(GL_LIGHT1, GL_POSITION, l_Light1Position);
-  glLightfv(GL_LIGHT1, GL_DIFFUSE, l_Light1Diffuse);
-  glEnable(GL_LIGHT1);
+//  GLfloat l_Light1Position[] = { -5.0f, -6.0f, 5.0f, 0.0f };
+//  GLfloat l_Light1Diffuse[] = { 0.6f, 0.8f, 1.0f, 1.0f };
+//  glLightfv(GL_LIGHT1, GL_POSITION, l_Light1Position);
+//  glLightfv(GL_LIGHT1, GL_DIFFUSE, l_Light1Diffuse);
+//  glEnable(GL_LIGHT1);
 
-  // Material...
-  GLfloat l_MaterialSpecular[] = { 0.3f, 0.3f, 0.3f, 1.0f };
-  GLfloat l_MaterialShininess[] = { 10.0f };
-  glMaterialfv(GL_FRONT, GL_SPECULAR, l_MaterialSpecular);
-  glMaterialfv(GL_FRONT, GL_SHININESS, l_MaterialShininess);
+////   Material...
+//    GLfloat l_MaterialSpecular[] = { 0.3f, 0.3f, 0.3f, 1.0f };
+//    GLfloat l_MaterialShininess[] = { 10.0f };
+//    glMaterialfv(GL_FRONT, GL_SPECULAR, l_MaterialSpecular);
+//    glMaterialfv(GL_FRONT, GL_SHININESS, l_MaterialShininess);
 }
 void OculusWidget::initTexture() {
   // Create FBO...
@@ -66,11 +79,19 @@ void OculusWidget::initTexture() {
   glBindFramebuffer(GL_FRAMEBUFFER, FBOId);
 
   // The texture we're going to render to...
-  glGenTextures(1, &textID);
-  // "Bind" the newly created texture : all future texture functions will modify this texture...
-  glBindTexture(GL_TEXTURE_2D, textID);
+  glGenTextures(2, textID);
+  //  glActiveTexture(GL_TEXTURE0);
+  //   "Bind" the newly created texture : all future texture functions will modify this texture...
+
+//    glActiveTexture(GL_TEXTURE1);
+//    glBindTexture(GL_TEXTURE_2D, textID[1]);
+//    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, img.width(), img.height(), 0, GL_RGBA, GL_UNSIGNED_BYTE, img.bits());
+
+  glActiveTexture(GL_TEXTURE0);
+  glBindTexture(GL_TEXTURE_2D, textID[0]);
   // Give an empty image to OpenGL (the last "0")
-  glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, renderTargetSize.w, renderTargetSize.h, 0, GL_RGBA, GL_UNSIGNED_BYTE, 0);
+  glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, renderTargetSize.w, renderTargetSize.h, 0, GL_RGBA, GL_UNSIGNED_BYTE, NULL);
+
   // Linear filtering...
   glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
   glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
@@ -82,7 +103,7 @@ void OculusWidget::initTexture() {
   glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_RENDERBUFFER, DepthBufferId);
 
   // Set the texture as our colour attachment #0...
-  glFramebufferTexture(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, textID, 0);
+  glFramebufferTexture(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, textID[0], 0);
 
   // Set the list of draw buffers...
   GLenum GLDrawBuffers[1] = { GL_COLOR_ATTACHMENT0 };
@@ -90,8 +111,8 @@ void OculusWidget::initTexture() {
 
   // Unbind...
   glBindRenderbuffer(GL_RENDERBUFFER, 0);
-  glBindTexture(GL_TEXTURE_2D, 0);
   glBindFramebuffer(GL_FRAMEBUFFER, 0);
+  glBindTexture(GL_TEXTURE_2D, 0);
   Q_ASSERT(!glGetError());
 
 }
@@ -101,44 +122,63 @@ void OculusWidget::initRender() {
 
   //left eye
   eyes[0].Eye = ovrEye_Left;
-  eyes[0].Fov = oculusInfos.DefaultEyeFov[0];
-  eyes[0].TextureSize = renderTargetSize;
-  eyes[0].RenderViewport.Pos = OVR::Vector2i(0,0);
-  eyes[0].RenderViewport.Size = OVR::Sizei(renderTargetSize.w/2, renderTargetSize.h);
-
-  //right eye
   eyes[1].Eye = ovrEye_Right;
+  eyes[0].Fov = oculusInfos.DefaultEyeFov[0];
   eyes[1].Fov = oculusInfos.DefaultEyeFov[1];
+  eyes[0].TextureSize = renderTargetSize;
   eyes[1].TextureSize = renderTargetSize;
-  eyes[1].RenderViewport.Pos = OVR::Vector2i((renderTargetSize.w + 1) / 2, 0);
+  eyes[0].RenderViewport.Pos = OVR::Vector2i(0,0);
+  eyes[1].RenderViewport.Pos = OVR::Vector2i((renderTargetSize.w + 1)/2,0);
+  eyes[0].RenderViewport.Size = OVR::Sizei(renderTargetSize.w/2 , renderTargetSize.h);
   eyes[1].RenderViewport.Size = eyes[0].RenderViewport.Size;
 
+  eyeTextureGL[0].OGL.Header.API = ovrRenderAPI_OpenGL;
+  eyeTextureGL[0].OGL.Header.TextureSize = renderTargetSize;
+  eyeTextureGL[0].OGL.Header.RenderViewport = eyes[0].RenderViewport;
+  eyeTextureGL[0].OGL.TexId = textID[0];
+
+  eyeTextureGL[1] = eyeTextureGL[0];
+  eyeTextureGL[1].OGL.Header.RenderViewport = eyes[1].RenderViewport;
+
   const int backBufferMultisample = 0;
-  cfg.OGL.Header.API = ovrRenderAPI_OpenGL;
-  cfg.OGL.Header.RTSize = OVR::Sizei(oculusInfos.Resolution.w, oculusInfos.Resolution.h);
-  cfg.OGL.Header.Multisample = backBufferMultisample;
-  cfg.OGL.Window = reinterpret_cast<HWND>(winId());
-  cfg.OGL.WglContext = wglGetCurrentContext();
-  cfg.OGL.GdiDc = wglGetCurrentDC();
+  cfg.OGL.Header.API =          ovrRenderAPI_OpenGL;
+  cfg.OGL.Header.RTSize =       oculusInfos.Resolution; /*OVR::Sizei(oculusInfos.Resolution.w, oculusInfos.Resolution.h);*/
+  cfg.OGL.Header.Multisample =  backBufferMultisample;
+  cfg.OGL.Window =              reinterpret_cast<HWND>(winId());
+  cfg.OGL.WglContext =          wglGetCurrentContext();
+  cfg.OGL.GdiDc =               wglGetCurrentDC();
 
   qDebug() << "Window:" << cfg.OGL.Window;
   qDebug() << "Context:" << cfg.OGL.WglContext;
   qDebug() << "DC:" << cfg.OGL.GdiDc;
 
-  if (!ovrHmd_ConfigureRendering(oculus, &cfg.Config, ovrHmdCap_NoVSync, ovrDistortion_Chromatic | ovrDistortion_TimeWarp , eyes,  eyeRenderDesc)){
+  if (!ovrHmd_ConfigureRendering(oculus, &cfg.Config, ovrHmdCap_NoVSync, ovrDistortion_Chromatic , eyes,  eyeRenderDesc)){
     qDebug() << "failed to configure rendering";
     exit(1);
   }
+}
+void OculusWidget::initShaders() {
+  // Override system locale until shaders are compiled
+  setlocale(LC_NUMERIC, "C");
 
-  eyeTextureGL[0].OGL.Header.API = ovrRenderAPI_OpenGL;
-  eyeTextureGL[0].OGL.Header.TextureSize = renderTargetSize;
-  eyeTextureGL[0].OGL.Header.RenderViewport = eyes[0].RenderViewport;
-  eyeTextureGL[0].OGL.TexId = textID;
+  // Compile vertex shader
+  if (!program.addShaderFromSourceFile(QGLShader::Vertex, "vertexShader.glsl"))
+    close();
 
-  eyeTextureGL[1] = eyeTextureGL[0];
-  eyeTextureGL[1].OGL.Header.RenderViewport = eyes[1].RenderViewport;
+  // Compile fragment shader
+  if (!program.addShaderFromSourceFile(QGLShader::Fragment, "fragmentShader.glsl"))
+    close();
 
-  resize(oculusInfos.Resolution.w, oculusInfos.Resolution.h);
+  // Link shader pipeline
+  if (!program.link())
+    close();
+
+  // Bind shader pipeline for use
+  if (!program.bind())
+    close();
+
+  // Restore system locale
+  setlocale(LC_ALL, "");
 }
 
 void OculusWidget::initializeGL() {
@@ -152,12 +192,16 @@ void OculusWidget::initializeGL() {
   renderTargetSize.h = qMax(recommendedTex0Size.h, recommendedTex1Size.h);
 
   SetOpenGLState();
+  initShaders();
   initTexture();
+  geometryEngine.init();
   initRender();
 }
 
 void OculusWidget::resizeGL(int width, int height) {
-  glViewport(0,0,width, height);
+  w = width;
+  h = height;
+  glViewport(0,0,w, h);
 }
 
 void OculusWidget::paintGL() {
@@ -165,15 +209,14 @@ void OculusWidget::paintGL() {
   const int ms(1000/60 /*fps*/);
   QTimer::singleShot(ms, this, SLOT(updateGL()));
 
+  qint64 tmp = QDateTime::currentMSecsSinceEpoch() /10;
+  GLfloat l_SpinX = (GLfloat) (tmp % 360);
+  GLfloat l_SpinY = (GLfloat) (tmp% 360);
+
   ovrFrameTiming m_HmdFrameTiming = ovrHmd_BeginFrame(oculus, 0);
 
   // Bind the FBO...
   glBindFramebuffer(GL_FRAMEBUFFER, FBOId);
-  glBindTexture(GL_TEXTURE, textID);
-  QImage img("D:/data/My Videos/equi.png)");
-  glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, renderTargetSize.w, renderTargetSize.h, 0, GL_RGBA, GL_UNSIGNED_BYTE, img.bits());
-  // Clear...
-  this->makeCurrent();
   glClearColor(0.2f, 0.3f, 0.4f, 1.0f);
   glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
@@ -189,36 +232,34 @@ void OculusWidget::paintGL() {
                );
 
     // Get Projection and ModelView matrici from the device...
-    OVR::Matrix4f l_ProjectionMatrix = ovrMatrix4f_Projection(
-                                         eyeRenderDesc[l_Eye].Desc.Fov, 0.3f, 100.0f, true);
+    OVR::Matrix4f l_ProjectionMatrix = ovrMatrix4f_Projection(eyeRenderDesc[l_Eye].Desc.Fov, 0.3f, 100.0f, true);
     OVR::Quatf l_Orientation = OVR::Quatf(l_EyePose.Orientation);
-    OVR::Matrix4f l_ModelViewMatrix = OVR::Matrix4f(l_Orientation.Inverted());
+    OVR::Matrix4f l_ModelViewMatrix = OVR::Matrix4f(l_Orientation);
 
-    // Pass matrici on to OpenGL...
-    glMatrixMode(GL_PROJECTION);
-    glLoadIdentity();
-    glMultMatrixf(&(l_ProjectionMatrix.Transposed().M[0][0]));
+    //   Pass matrici on to OpenGL...
+
     glMatrixMode(GL_MODELVIEW);
     glLoadIdentity();
     // Translate for specific eye based on IPD...
     glTranslatef(eyeRenderDesc[l_Eye].ViewAdjust.x,
                  eyeRenderDesc[l_Eye].ViewAdjust.y,
                  eyeRenderDesc[l_Eye].ViewAdjust.z);
-    // Multiply with orientation retrieved from sensor...
-    glMultMatrixf(&(l_ModelViewMatrix.Transposed().M[0][0]));
-    // Move back a bit to show scene in front of us...
-    glTranslatef(0.0f, 0.0f, -3.0f);
 
-    // Make the cube spin..
-    glRotatef(17.0, 1.0f, 0.0f, 0.0f);
-    glRotatef(17.0, 0.0f, 1.0f, 0.0f);
-    // Render...
-    renderCube(1.0f);
+    // Multiply with orientation retrieved from sensor...
+    glTranslatef(-0.00f, 0.0f, -2.0f);
+    glMultMatrixf(&(l_ModelViewMatrix.Transposed().M[0][0]));
+
+    glMatrixMode(GL_PROJECTION);
+    glLoadIdentity();
+    glMultMatrixf(&(l_ProjectionMatrix.Transposed().M[0][0]));
+
+    geometryEngine.drawSphereGeometry(&program);
 
     ovrHmd_EndEyeRender(oculus, l_Eye, l_EyePose, &eyeTextureGL[l_Eye].Texture);
+
   }
 
-  // Unbind the FBO, back to normal drawing...
+  //  // Unbind the FBO, back to normal drawing...
   glBindFramebuffer(GL_FRAMEBUFFER, 0);
 
   // Oculus wants CW orientations, avoid the problem by turning of culling...
@@ -230,60 +271,45 @@ void OculusWidget::paintGL() {
   glEnable(GL_DEPTH_TEST);
   glClearDepth(1);
   glUseProgram(0);
+
+
 }
 
-void OculusWidget::renderCube(float p_Size) {
+void OculusWidget::renderCube() {
 
-  const float l_SizeDiv2 = p_Size*0.5f;
 
   // A cube...
-  glBegin(GL_QUADS);
-  glNormal3f( 0.0f, 0.0f, 1.0f);
-  glVertex3f( l_SizeDiv2, l_SizeDiv2, l_SizeDiv2);
-  glVertex3f(-l_SizeDiv2, l_SizeDiv2, l_SizeDiv2);
-  glVertex3f(-l_SizeDiv2,-l_SizeDiv2, l_SizeDiv2);
-  glVertex3f( l_SizeDiv2,-l_SizeDiv2, l_SizeDiv2);
-  glEnd();
-
-  glBegin(GL_QUADS);
-  glNormal3f( 0.0f, 0.0f,-1.0f);
-  glVertex3f(-l_SizeDiv2,-l_SizeDiv2,-l_SizeDiv2);
-  glVertex3f(-l_SizeDiv2, l_SizeDiv2,-l_SizeDiv2);
-  glVertex3f( l_SizeDiv2, l_SizeDiv2,-l_SizeDiv2);
-  glVertex3f( l_SizeDiv2,-l_SizeDiv2,-l_SizeDiv2);
-  glEnd();
-
-  glBegin(GL_QUADS);
-  glNormal3f( 0.0f, 1.0f, 0.0f);
-  glVertex3f( l_SizeDiv2, l_SizeDiv2, l_SizeDiv2);
-  glVertex3f( l_SizeDiv2, l_SizeDiv2,-l_SizeDiv2);
-  glVertex3f(-l_SizeDiv2, l_SizeDiv2,-l_SizeDiv2);
-  glVertex3f(-l_SizeDiv2, l_SizeDiv2, l_SizeDiv2);
-  glEnd();
-
-  glBegin(GL_QUADS);
-  glNormal3f( 0.0f,-1.0f, 0.0f);
-  glVertex3f(-l_SizeDiv2,-l_SizeDiv2,-l_SizeDiv2);
-  glVertex3f( l_SizeDiv2,-l_SizeDiv2,-l_SizeDiv2);
-  glVertex3f( l_SizeDiv2,-l_SizeDiv2, l_SizeDiv2);
-  glVertex3f(-l_SizeDiv2,-l_SizeDiv2, l_SizeDiv2);
-  glEnd();
-
-  glBegin(GL_QUADS);
-  glNormal3f( 1.0f, 0.0f, 0.0f);
-  glVertex3f( l_SizeDiv2, l_SizeDiv2, l_SizeDiv2);
-  glVertex3f( l_SizeDiv2,-l_SizeDiv2, l_SizeDiv2);
-  glVertex3f( l_SizeDiv2,-l_SizeDiv2,-l_SizeDiv2);
-  glVertex3f( l_SizeDiv2, l_SizeDiv2,-l_SizeDiv2);
-  glEnd();
-
-  glBegin(GL_QUADS);
-  glNormal3f(-1.0f, 0.0f, 0.0f);
-  glVertex3f(-l_SizeDiv2,-l_SizeDiv2,-l_SizeDiv2);
-  glVertex3f(-l_SizeDiv2,-l_SizeDiv2, l_SizeDiv2);
-  glVertex3f(-l_SizeDiv2, l_SizeDiv2, l_SizeDiv2);
-  glVertex3f(-l_SizeDiv2, l_SizeDiv2,-l_SizeDiv2);
-  glEnd();
+  glBegin(GL_QUADS);        // Draw The Cube Using quads
+      glColor3f(0.0f,1.0f,0.0f);    // Color Blue
+      glVertex3f( 1.0f, 1.0f,-1.0f);    // Top Right Of The Quad (Top)
+      glVertex3f(-1.0f, 1.0f,-1.0f);    // Top Left Of The Quad (Top)
+      glVertex3f(-1.0f, 1.0f, 1.0f);    // Bottom Left Of The Quad (Top)
+      glVertex3f( 1.0f, 1.0f, 1.0f);    // Bottom Right Of The Quad (Top)
+      glColor3f(1.0f,0.5f,0.0f);    // Color Orange
+      glVertex3f( 1.0f,-1.0f, 1.0f);    // Top Right Of The Quad (Bottom)
+      glVertex3f(-1.0f,-1.0f, 1.0f);    // Top Left Of The Quad (Bottom)
+      glVertex3f(-1.0f,-1.0f,-1.0f);    // Bottom Left Of The Quad (Bottom)
+      glVertex3f( 1.0f,-1.0f,-1.0f);    // Bottom Right Of The Quad (Bottom)
+      glColor3f(1.0f,0.0f,0.0f);    // Color Red
+      glVertex3f( 1.0f, 1.0f, 1.0f);    // Top Right Of The Quad (Front)
+      glVertex3f(-1.0f, 1.0f, 1.0f);    // Top Left Of The Quad (Front)
+      glVertex3f(-1.0f,-1.0f, 1.0f);    // Bottom Left Of The Quad (Front)
+      glVertex3f( 1.0f,-1.0f, 1.0f);    // Bottom Right Of The Quad (Front)
+      glColor3f(1.0f,1.0f,0.0f);    // Color Yellow
+      glVertex3f( 1.0f,-1.0f,-1.0f);    // Top Right Of The Quad (Back)
+      glVertex3f(-1.0f,-1.0f,-1.0f);    // Top Left Of The Quad (Back)
+      glVertex3f(-1.0f, 1.0f,-1.0f);    // Bottom Left Of The Quad (Back)
+      glVertex3f( 1.0f, 1.0f,-1.0f);    // Bottom Right Of The Quad (Back)
+      glColor3f(0.0f,0.0f,1.0f);    // Color Blue
+      glVertex3f(-1.0f, 1.0f, 1.0f);    // Top Right Of The Quad (Left)
+      glVertex3f(-1.0f, 1.0f,-1.0f);    // Top Left Of The Quad (Left)
+      glVertex3f(-1.0f,-1.0f,-1.0f);    // Bottom Left Of The Quad (Left)
+      glVertex3f(-1.0f,-1.0f, 1.0f);    // Bottom Right Of The Quad (Left)
+      glColor3f(1.0f,0.0f,1.0f);    // Color Violet
+      glVertex3f( 1.0f, 1.0f,-1.0f);    // Top Right Of The Quad (Right)
+      glVertex3f( 1.0f, 1.0f, 1.0f);    // Top Left Of The Quad (Right)
+      glVertex3f( 1.0f,-1.0f, 1.0f);    // Bottom Left Of The Quad (Right)
+      glVertex3f( 1.0f,-1.0f,-1.0f);    // Bottom Right Of The Quad (Right)
+    glEnd();            // End Drawing The Cube - See more at: http://www.codemiles.com/c-opengl-examples/draw-3d-cube-using-opengl-t9018.html#sthash.ABNhayCR.dpuf
 }
-
 
